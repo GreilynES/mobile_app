@@ -119,7 +119,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       ),
                       _DetailCard(
                         icon: Icons.description,
-                        label: 'Motivo del Voluntariado',
+                        label: 'Motivo de Asociación',
                         value: s.motivo,
                         isLongText: true,
                       ),

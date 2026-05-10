@@ -1,6 +1,6 @@
 {
-    "name": "voluntariado_consulta_app",
-    "short_name": "voluntariado_consulta_app",
+    "name": "Asociados Consulta",
+    "short_name": "Asociados Consulta",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
