@@ -11,11 +11,13 @@ class AuthProvider extends ChangeNotifier {
   AuthUser? _user;
   String? _token;
   bool _isLoading = false;
+  bool _isInitializing = true; // Nuevo: Para saber si estamos cargando la sesión inicial
   String? _errorMessage;
 
   AuthUser? get user => _user;
   String? get token => _token;
   bool get isLoading => _isLoading;
+  bool get isInitializing => _isInitializing; // Getter para el Splash
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _token != null;
 
@@ -23,7 +25,7 @@ class AuthProvider extends ChangeNotifier {
     checkSession();
   }
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String email, String password, {bool rememberMe = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -33,9 +35,11 @@ class AuthProvider extends ChangeNotifier {
       _user = result['user'];
       _token = result['token'];
 
-      // Guardar en storage seguro
-      await _storage.write(key: 'jwt_token', value: _token);
-      await _storage.write(key: 'user_data', value: jsonEncode(_user!.toJson()));
+      if (rememberMe) {
+        // Guardar en storage seguro solo si el usuario lo pidió
+        await _storage.write(key: 'jwt_token', value: _token);
+        await _storage.write(key: 'user_data', value: jsonEncode(_user!.toJson()));
+      }
 
       _isLoading = false;
       notifyListeners();
@@ -56,8 +60,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> checkSession() async {
-    _isLoading = true;
+    _isInitializing = true;
     notifyListeners();
+
+    // Pequeña pausa artificial para que el splash se vea "bien lindo" y no sea solo un flash
+    await Future.delayed(const Duration(seconds: 2));
 
     final savedToken = await _storage.read(key: 'jwt_token');
     final savedUserData = await _storage.read(key: 'user_data');
@@ -67,12 +74,11 @@ class AuthProvider extends ChangeNotifier {
         _token = savedToken;
         _user = AuthUser.fromJson(jsonDecode(savedUserData));
       } catch (e) {
-        // Si hay error parseando, limpiamos todo
         await logout();
       }
     }
 
-    _isLoading = false;
+    _isInitializing = false;
     notifyListeners();
   }
 
