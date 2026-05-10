@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/solicitud_provider.dart';
+import '../theme/app_colors.dart';
 import 'detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = authProvider.user;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Solicitudes Cámara'),
         actions: [
@@ -45,8 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => authProvider.logout(),
           ),
         ],
-        backgroundColor: Colors.green.shade800,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.backgroundLight,
       ),
       body: Consumer<SolicitudProvider>(
         builder: (context, provider, _) {
@@ -61,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 60, color: AppColors.destructive),
                     const SizedBox(height: 16),
                     Text(
                       provider.errorMessage!,
@@ -110,11 +112,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
-                    color: Colors.green.shade50,
+                    color: AppColors.backgroundLight,
                     child: Text(
                       'Bienvenido, ${user.username} (${user.roleName})',
-                      style: TextStyle(
-                        color: Colors.green.shade900,
+                      style: const TextStyle(
+                        color: AppColors.textDark,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -131,10 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: Colors.green.shade100,
+                            backgroundColor: AppColors.backgroundAccent,
                             child: Text(
                               solicitud.nombre.isNotEmpty ? solicitud.nombre[0].toUpperCase() : '?',
-                              style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
                             ),
                           ),
                           title: Text(
@@ -189,14 +191,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getStatusColor(String estado) {
     switch (estado.toUpperCase()) {
       case 'PENDIENTE':
-        return Colors.orange;
+        return AppColors.warning;
       case 'ACEPTADA':
       case 'APROBADA':
-        return Colors.green;
+        return AppColors.success;
       case 'RECHAZADA':
-        return Colors.red;
+        return AppColors.destructive;
       default:
-        return Colors.blue;
+        return AppColors.textMuted;
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberMe = false; // Nuevo: Estado del checkbox
 
   @override
   void dispose() {
@@ -29,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await authProvider.login(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          rememberMe: _rememberMe, // Pasar el estado del checkbox
         );
         // La navegación se maneja en el Wrapper o Main si escuchamos el estado,
         // pero aquí podemos forzar si es necesario.
@@ -37,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(authProvider.errorMessage ?? 'Error al iniciar sesión'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.destructive,
             ),
           );
         }
@@ -50,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.backgroundLight,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -60,14 +63,14 @@ class _LoginScreenState extends State<LoginScreen> {
               // Logo or Icon
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
+                decoration: const BoxDecoration(
+                  color: AppColors.borderVariant,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.agriculture,
                   size: 80,
-                  color: Colors.green,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -76,14 +79,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3436),
+                  color: AppColors.textDark,
                 ),
               ),
               const Text(
                 'Hojancha',
                 style: TextStyle(
                   fontSize: 20,
-                  color: Colors.green,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -105,6 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.textDarkVariant,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -139,6 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                color: AppColors.textMuted,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -157,11 +162,29 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 12),
+                        // Nuevo: Checkbox de Recordarme
+                        CheckboxListTile(
+                          value: _rememberMe,
+                          onChanged: (value) {
+                            setState(() {
+                              _rememberMe = value ?? false;
+                            });
+                          },
+                          title: const Text(
+                            'Recordar sesión',
+                            style: TextStyle(fontSize: 14, color: AppColors.textDarkVariant),
+                          ),
+                          controlAffinity: ListTileControlAffinity.leading,
+                          contentPadding: EdgeInsets.zero,
+                          activeColor: AppColors.primary,
+                          dense: true,
+                        ),
+                        const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: authProvider.isLoading ? null : _handleLogin,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -193,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 24),
               const Text(
                 '© 2026 Cámara de Ganaderos de Hojancha',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
               ),
             ],
           ),

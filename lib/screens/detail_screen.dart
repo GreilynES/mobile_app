@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/solicitud_provider.dart';
+import '../theme/app_colors.dart';
 
 class DetailScreen extends StatefulWidget {
   const DetailScreen({super.key, required this.solicitudId});
@@ -35,10 +36,11 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Detalle de Solicitud'),
-        backgroundColor: Colors.green.shade800,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textDark,
       ),
       body: Consumer<SolicitudProvider>(
         builder: (context, provider, _) {
@@ -53,7 +55,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 60, color: AppColors.destructive),
                     const SizedBox(height: 16),
                     Text(
                       provider.errorMessage!,
@@ -81,16 +83,16 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Container(
                   width: double.infinity,
-                  color: Colors.green.shade50,
+                  color: AppColors.backgroundLight,
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.green.shade900),
+                      const Icon(Icons.info_outline, color: AppColors.textDark),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'Esta aplicación es de solo consulta. La gestión se realiza en el sistema web.',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark),
                         ),
                       ),
                     ],
@@ -173,7 +175,7 @@ class _DetailCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: isLongText ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.green.shade800, size: 28),
+          Icon(icon, color: AppColors.primary, size: 28),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -181,9 +183,9 @@ class _DetailCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: AppColors.textMuted,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
