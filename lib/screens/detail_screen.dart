@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../providers/solicitud_provider.dart';
 
 class DetailScreen extends StatefulWidget {
@@ -17,9 +18,18 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => context.read<SolicitudProvider>().fetchSolicitudDetalle(widget.solicitudId),
-    );
+    _loadDetail();
+  }
+
+  void _loadDetail() {
+    Future.microtask(() {
+      final auth = context.read<AuthProvider>();
+      context.read<SolicitudProvider>().fetchSolicitudDetalle(
+        widget.solicitudId,
+        auth.token,
+        onUnauthorized: () => auth.logout(),
+      );
+    });
   }
 
   @override
@@ -27,7 +37,7 @@ class _DetailScreenState extends State<DetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de Solicitud'),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.green.shade800,
         foregroundColor: Colors.white,
       ),
       body: Consumer<SolicitudProvider>(
@@ -38,16 +48,24 @@ class _DetailScreenState extends State<DetailScreen> {
 
           if (provider.errorMessage != null) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(provider.errorMessage!),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => provider.fetchSolicitudDetalle(widget.solicitudId),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      provider.errorMessage!,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadDetail,
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -63,11 +81,11 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 Container(
                   width: double.infinity,
-                  color: Colors.amber.shade100,
+                  color: Colors.green.shade50,
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.amber.shade900),
+                      Icon(Icons.info_outline, color: Colors.green.shade900),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
@@ -155,7 +173,7 @@ class _DetailCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: isLongText ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.blue.shade800, size: 28),
+          Icon(icon, color: Colors.green.shade800, size: 28),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
