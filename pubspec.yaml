@@ -1,5 +1,5 @@
-name: voluntariado_consulta_app
-description: Primer avance de app Flutter para consulta de solicitudes de voluntariado.
+name: asociados_consulta_app
+description: App Flutter para consulta de solicitudes de asociados.
 publish_to: 'none'
 version: 0.1.0+1
 

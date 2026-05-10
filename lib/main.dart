@@ -8,18 +8,18 @@ import 'services/fcm_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FcmService.initialize();
-  runApp(const VoluntariadoApp());
+  runApp(const AsociadosApp());
 }
 
-class VoluntariadoApp extends StatelessWidget {
-  const VoluntariadoApp({super.key});
+class AsociadosApp extends StatelessWidget {
+  const AsociadosApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => SolicitudProvider(),
       child: MaterialApp(
-        title: 'Voluntariado - Consulta',
+        title: 'Asociados - Consulta',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
