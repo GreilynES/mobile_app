@@ -9,15 +9,14 @@ class ApiService {
 
   ApiService({http.Client? client}) : _client = client ?? http.Client();
 
-  Future<List<Solicitud>> getSolicitudes() async {
+  Future<List<Solicitud>> getSolicitudes(String? token) async {
     try {
       final response = await _client.get(
         Uri.parse('${ApiConfig.baseUrl}/solicitudes'),
-        headers: ApiConfig.getHeaders(),
+        headers: ApiConfig.getHeaders(token),
       );
 
       return _handleResponse(response, (decoded) {
-        // Buscamos la lista de solicitudes. Puede venir directo o dentro de un campo.
         List<dynamic> list;
         if (decoded is List) {
           list = decoded;
@@ -43,15 +42,14 @@ class ApiService {
     }
   }
 
-  Future<Solicitud> getSolicitudById(String id) async {
+  Future<Solicitud> getSolicitudById(String id, String? token) async {
     try {
       final response = await _client.get(
         Uri.parse('${ApiConfig.baseUrl}/solicitudes/$id'),
-        headers: ApiConfig.getHeaders(),
+        headers: ApiConfig.getHeaders(token),
       );
 
       return _handleResponse(response, (decoded) {
-        // Buscamos el objeto de la solicitud. Puede venir directo o dentro de 'data'.
         Map<String, dynamic> data;
         if (decoded is Map<String, dynamic>) {
           if (decoded.containsKey('idSolicitud') || decoded.containsKey('persona')) {
@@ -79,11 +77,18 @@ class ApiService {
       final decoded = jsonDecode(response.body);
       return mapper(decoded);
     } else if (response.statusCode == 401 || response.statusCode == 403) {
-      throw Exception('Sesión expirada o token inválido. Por favor, revisa el acceso.');
+      throw UnauthorizedException('Sesión expirada. Inicia sesión nuevamente.');
     } else if (response.statusCode == 404) {
       throw Exception('No se encontró el recurso solicitado.');
     } else {
       throw Exception('Error en el servidor (${response.statusCode}). Intenta más tarde.');
     }
   }
+}
+
+class UnauthorizedException implements Exception {
+  final String message;
+  UnauthorizedException(this.message);
+  @override
+  String toString() => message;
 }

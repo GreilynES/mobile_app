@@ -18,41 +18,47 @@ class SolicitudProvider extends ChangeNotifier {
   List<Solicitud> get solicitudes => _solicitudes;
   Solicitud? get solicitudDetalle => _solicitudDetalle;
 
-  Future<void> fetchSolicitudes() async {
+  Future<void> fetchSolicitudes(String? token, {VoidCallback? onUnauthorized}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _solicitudes = await _apiService.getSolicitudes();
+      _solicitudes = await _apiService.getSolicitudes(token);
       if (_solicitudes.isEmpty) {
         _errorMessage = 'No hay solicitudes disponibles en este momento.';
       }
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      if (e is UnauthorizedException && onUnauthorized != null) {
+        onUnauthorized();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> fetchSolicitudDetalle(String id) async {
+  Future<void> fetchSolicitudDetalle(String id, String? token, {VoidCallback? onUnauthorized}) async {
     _isLoading = true;
     _errorMessage = null;
     _solicitudDetalle = null;
     notifyListeners();
 
     try {
-      _solicitudDetalle = await _apiService.getSolicitudById(id);
+      _solicitudDetalle = await _apiService.getSolicitudById(id, token);
     } catch (e) {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      if (e is UnauthorizedException && onUnauthorized != null) {
+        onUnauthorized();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> refreshSolicitudes() async {
-    await fetchSolicitudes();
+  Future<void> refreshSolicitudes(String? token, {VoidCallback? onUnauthorized}) async {
+    await fetchSolicitudes(token, onUnauthorized: onUnauthorized);
   }
 }
