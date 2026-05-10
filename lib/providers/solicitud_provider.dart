@@ -10,6 +10,7 @@ class SolicitudProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   List<Solicitud> _solicitudes = [];
+  String _selectedEstado = 'PENDIENTE';
   Solicitud? _solicitudDetalle;
 
   // Getters
@@ -17,6 +18,20 @@ class SolicitudProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   List<Solicitud> get solicitudes => _solicitudes;
   Solicitud? get solicitudDetalle => _solicitudDetalle;
+  String get selectedEstado => _selectedEstado;
+
+  List<Solicitud> get solicitudesFiltradas {
+    return _solicitudes.where((s) => s.estado.toUpperCase() == _selectedEstado.toUpperCase()).toList();
+  }
+
+  int getCount(String estado) {
+    return _solicitudes.where((s) => s.estado.toUpperCase() == estado.toUpperCase()).length;
+  }
+
+  void setEstadoFiltro(String estado) {
+    _selectedEstado = estado;
+    notifyListeners();
+  }
 
   Future<void> fetchSolicitudes(String? token, {VoidCallback? onUnauthorized}) async {
     _isLoading = true;

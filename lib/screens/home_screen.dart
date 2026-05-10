@@ -122,68 +122,123 @@ class _HomeScreenState extends State<HomeScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
+                
+                // Filtros por estado
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      _buildFilterChip(context, provider, 'PENDIENTE', 'Pendientes'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(context, provider, 'APROBADO', 'Aprobadas'),
+                      const SizedBox(width: 8),
+                      _buildFilterChip(context, provider, 'RECHAZADO', 'Rechazadas'),
+                    ],
+                  ),
+                ),
+
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: provider.solicitudes.length,
-                    itemBuilder: (context, index) {
-                      final solicitud = provider.solicitudes[index];
-                      return Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: AppColors.backgroundAccent,
-                            child: Text(
-                              solicitud.nombre.isNotEmpty ? solicitud.nombre[0].toUpperCase() : '?',
-                              style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          title: Text(
-                            solicitud.nombre,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  child: provider.solicitudesFiltradas.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Fecha: ${DateFormat('dd/MM/yyyy').format(solicitud.fecha)}'),
-                              const SizedBox(height: 4),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(solicitud.estado).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: _getStatusColor(solicitud.estado)),
-                                ),
-                                child: Text(
-                                  solicitud.estado,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: _getStatusColor(solicitud.estado),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              Icon(Icons.filter_list_off, size: 48, color: Colors.grey.shade400),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'No hay solicitudes en este estado.',
+                                style: TextStyle(color: Colors.grey, fontSize: 16),
                               ),
                             ],
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => DetailScreen(solicitudId: solicitud.id),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 0),
+                          itemCount: provider.solicitudesFiltradas.length,
+                          itemBuilder: (context, index) {
+                            final solicitud = provider.solicitudesFiltradas[index];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: AppColors.backgroundAccent,
+                                  child: Text(
+                                    solicitud.nombre.isNotEmpty ? solicitud.nombre[0].toUpperCase() : '?',
+                                    style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                title: Text(
+                                  solicitud.nombre,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Fecha: ${DateFormat('dd/MM/yyyy').format(solicitud.fecha)}'),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(solicitud.estado).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: _getStatusColor(solicitud.estado)),
+                                      ),
+                                      child: Text(
+                                        solicitud.estado,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: _getStatusColor(solicitud.estado),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => DetailScreen(solicitudId: solicitud.id),
+                                    ),
+                                  );
+                                },
                               ),
                             );
                           },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(BuildContext context, SolicitudProvider provider, String estado, String label) {
+    final isSelected = provider.selectedEstado == estado;
+    final count = provider.getCount(estado);
+
+    return ChoiceChip(
+      label: Text('$label ($count)'),
+      selected: isSelected,
+      onSelected: (selected) {
+        if (selected) {
+          provider.setEstadoFiltro(estado);
+        }
+      },
+      selectedColor: AppColors.primary,
+      backgroundColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppColors.primary,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: const BorderSide(color: AppColors.backgroundAccent),
       ),
     );
   }
