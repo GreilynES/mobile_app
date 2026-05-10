@@ -1,78 +1,89 @@
 import 'dart:convert';
-
+import 'dart:io';
 import 'package:http/http.dart' as http;
-
+import '../config/api_config.dart';
 import '../models/solicitud_model.dart';
 
 class ApiService {
-  ApiService({http.Client? client, String? baseUrl})
-      : _client = client ?? http.Client(),
-        _baseUrl = baseUrl ?? 'https://b4ck3nd.camaraganaderoshojancha.cloud';
-
   final http.Client _client;
-  final String _baseUrl;
+
+  ApiService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<List<Solicitud>> getSolicitudes() async {
     try {
-      final response = await _client.get(Uri.parse('$_baseUrl/solicitudes'));
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/solicitudes'),
+        headers: ApiConfig.getHeaders(),
+      );
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body) as List<dynamic>;
-        return decoded
+      return _handleResponse(response, (decoded) {
+        // Buscamos la lista de solicitudes. Puede venir directo o dentro de un campo.
+        List<dynamic> list;
+        if (decoded is List) {
+          list = decoded;
+        } else if (decoded is Map<String, dynamic>) {
+          list = (decoded['data'] ?? 
+                  decoded['solicitudes'] ?? 
+                  decoded['items'] ?? 
+                  decoded['result'] ?? 
+                  decoded['results'] ?? 
+                  []) as List<dynamic>;
+        } else {
+          list = [];
+        }
+
+        return list
             .map((item) => Solicitud.fromJson(item as Map<String, dynamic>))
             .toList();
-      }
+      });
+    } on SocketException {
+      throw Exception('No hay conexión a internet. Verifica tu red.');
     } catch (e) {
-      // ignore: avoid_print
-      print('Error de conexión al backend: $e. Usando datos de prueba.');
+      rethrow;
     }
-    return _getMockSolicitudes();
   }
 
   Future<Solicitud> getSolicitudById(String id) async {
     try {
-      final response = await _client.get(Uri.parse('$_baseUrl/solicitudes/$id'));
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/solicitudes/$id'),
+        headers: ApiConfig.getHeaders(),
+      );
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-        return Solicitud.fromJson(decoded);
-      }
+      return _handleResponse(response, (decoded) {
+        // Buscamos el objeto de la solicitud. Puede venir directo o dentro de 'data'.
+        Map<String, dynamic> data;
+        if (decoded is Map<String, dynamic>) {
+          if (decoded.containsKey('idSolicitud') || decoded.containsKey('persona')) {
+            data = decoded;
+          } else if (decoded['data'] is Map<String, dynamic>) {
+            data = decoded['data'] as Map<String, dynamic>;
+          } else {
+            data = decoded;
+          }
+        } else {
+          throw Exception('Formato de respuesta inválido');
+        }
+
+        return Solicitud.fromJson(data);
+      });
+    } on SocketException {
+      throw Exception('No hay conexión a internet.');
     } catch (e) {
-      // ignore: avoid_print
-      print('Error de conexión al backend: $e. Usando datos de prueba.');
+      rethrow;
     }
-    return _getMockSolicitudes().firstWhere(
-      (s) => s.id == id,
-      orElse: () => _getMockSolicitudes().first,
-    );
   }
 
-  List<Solicitud> _getMockSolicitudes() {
-    return [
-      Solicitud(
-        id: '1',
-        nombre: 'Juan Pérez',
-        fecha: DateTime.now().subtract(const Duration(days: 2)),
-        telefono: '8888-1111',
-        correo: 'juan.perez@example.com',
-        motivoVoluntariado: 'Deseo ayudar en la limpieza de playas y conservación ambiental.',
-      ),
-      Solicitud(
-        id: '2',
-        nombre: 'María García',
-        fecha: DateTime.now().subtract(const Duration(days: 5)),
-        telefono: '7777-2222',
-        correo: 'm.garcia@test.com',
-        motivoVoluntariado: 'Me apasiona el trabajo con niños en riesgo social.',
-      ),
-      Solicitud(
-        id: '3',
-        nombre: 'Greilyn Esquivel',
-        fecha: DateTime.now(),
-        telefono: '6666-3333',
-        correo: 'greilyn@universidad.ac.cr',
-        motivoVoluntariado: 'Quiero aplicar mis conocimientos de tecnología en proyectos sociales.',
-      ),
-    ];
+  dynamic _handleResponse(http.Response response, Function(dynamic) mapper) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final decoded = jsonDecode(response.body);
+      return mapper(decoded);
+    } else if (response.statusCode == 401 || response.statusCode == 403) {
+      throw Exception('Sesión expirada o token inválido. Por favor, revisa el acceso.');
+    } else if (response.statusCode == 404) {
+      throw Exception('No se encontró el recurso solicitado.');
+    } else {
+      throw Exception('Error en el servidor (${response.statusCode}). Intenta más tarde.');
+    }
   }
 }

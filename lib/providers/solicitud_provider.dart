@@ -1,46 +1,58 @@
 import 'package:flutter/foundation.dart';
-
 import '../models/solicitud_model.dart';
 import '../services/api_service.dart';
 
 class SolicitudProvider extends ChangeNotifier {
-  SolicitudProvider({ApiService? apiService}) : _apiService = apiService ?? ApiService();
-
   final ApiService _apiService;
 
-  bool isLoading = false;
-  String? error;
-  List<Solicitud> solicitudes = [];
-  Solicitud? solicitudDetalle;
+  SolicitudProvider({ApiService? apiService}) : _apiService = apiService ?? ApiService();
+
+  bool _isLoading = false;
+  String? _errorMessage;
+  List<Solicitud> _solicitudes = [];
+  Solicitud? _solicitudDetalle;
+
+  // Getters
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
+  List<Solicitud> get solicitudes => _solicitudes;
+  Solicitud? get solicitudDetalle => _solicitudDetalle;
 
   Future<void> fetchSolicitudes() async {
-    isLoading = true;
-    error = null;
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      solicitudes = await _apiService.getSolicitudes();
+      _solicitudes = await _apiService.getSolicitudes();
+      if (_solicitudes.isEmpty) {
+        _errorMessage = 'No hay solicitudes disponibles en este momento.';
+      }
     } catch (e) {
-      error = 'No se pudieron obtener las solicitudes.';
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> fetchSolicitudDetalle(String id) async {
-    isLoading = true;
-    error = null;
-    solicitudDetalle = null;
+    _isLoading = true;
+    _errorMessage = null;
+    _solicitudDetalle = null;
     notifyListeners();
 
     try {
-      solicitudDetalle = await _apiService.getSolicitudById(id);
+      _solicitudDetalle = await _apiService.getSolicitudById(id);
     } catch (e) {
-      error = 'No se pudo obtener el detalle de la solicitud.';
+      _errorMessage = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> refreshSolicitudes() async {
+    await fetchSolicitudes();
   }
 }
