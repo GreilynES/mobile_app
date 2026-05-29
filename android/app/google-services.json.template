@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "695416392276",
+    "project_id": "camara-de-ganaderos-hojancha",
+    "storage_bucket": "camara-de-ganaderos-hojancha.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695416392276:android:ec7dad81fee71accd53bc1",
+        "android_client_info": {
+          "package_name": "com.example.asociados_consulta_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "${FIREBASE_API_KEY}"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:695416392276:android:7ae7b5d9c1ae82b2d53bc1",
+        "android_client_info": {
+          "package_name": "m0v1l3s.CGH"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "${FIREBASE_API_KEY}"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
