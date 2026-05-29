@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'https://b4ck3nd.camaraganaderoshojancha.cloud';
+  static const String baseUrl = 'https://movilesb.camaraganaderoshojancha.cloud';
 
   static Map<String, String> getHeaders(String? token) {
     final Map<String, String> headers = {

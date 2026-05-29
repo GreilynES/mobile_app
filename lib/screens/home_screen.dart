@@ -1,9 +1,11 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/solicitud_provider.dart';
+import '../services/fcm_service.dart';
 import '../theme/app_colors.dart';
 import 'detail_screen.dart';
 
@@ -19,6 +21,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _setupFcmCallbacks();
+    _startAutoRefresh();
+  }
+
+  @override
+  void dispose() {
+    // El auto-refresh se detiene automáticamente cuando cambias de pantalla
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    Future.microtask(() {
+      final auth = context.read<AuthProvider>();
+      final solicitudProvider = context.read<SolicitudProvider>();
+      
+      // Activa refresco automático cada 30 segundos
+      solicitudProvider.startAutoRefresh(
+        auth.token,
+        onUnauthorized: () => auth.logout(),
+      );
+    });
   }
 
   void _loadData() {
@@ -29,6 +52,51 @@ class _HomeScreenState extends State<HomeScreen> {
         onUnauthorized: () => auth.logout(),
       );
     });
+  }
+
+  void _setupFcmCallbacks() {
+    // Callback cuando llega una notificación en foreground
+    FcmService.setNotificationCallbacks(
+      onNotification: (RemoteMessage message) async {
+        // ignore: avoid_print
+        print('📲 Notificación recibida en foreground: ${message.notification?.title}');
+        
+        // Refrescar la lista de solicitudes automáticamente
+        if (mounted) {
+          final auth = context.read<AuthProvider>();
+          await context.read<SolicitudProvider>().refreshSolicitudes(
+            auth.token,
+            onUnauthorized: () => auth.logout(),
+          );
+          
+          // Mostrar snackbar informativo
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message.notification?.body ?? 'Nueva solicitud recibida'),
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      },
+      onNotificationTapped: (RemoteMessage message) async {
+        // ignore: avoid_print
+        print('👆 Notificación tocada: ${message.notification?.title}');
+        
+        // Si la notificación contiene el ID de la solicitud, navegar a ella
+        final solicitudId = message.data['solicitudId'] ?? message.data['id'];
+        if (solicitudId != null && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailScreen(solicitudId: solicitudId),
+            ),
+          );
+        }
+      },
+    );
   }
 
   @override

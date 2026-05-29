@@ -72,6 +72,43 @@ class ApiService {
     }
   }
 
+  Future<void> registerDeviceToken(String fcmToken, String? authToken) async {
+    try {
+      final response = await _client.post(
+        Uri.parse('${ApiConfig.baseUrl}/notifications/register-device'),
+        headers: ApiConfig.getHeaders(authToken),
+        body: jsonEncode({
+          'token': fcmToken,
+          'platform': Platform.isIOS ? 'ios' : 'android',
+        }),
+      );
+
+      _handleResponse(response, (decoded) => decoded);
+    } on SocketException {
+      throw Exception('No hay conexión a internet.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> unregisterDeviceToken(String fcmToken, String? authToken) async {
+    try {
+      final response = await _client.delete(
+        Uri.parse('${ApiConfig.baseUrl}/notifications/unregister-device'),
+        headers: ApiConfig.getHeaders(authToken),
+        body: jsonEncode({
+          'token': fcmToken,
+        }),
+      );
+
+      _handleResponse(response, (decoded) => decoded);
+    } on SocketException {
+      throw Exception('No hay conexión a internet.');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   dynamic _handleResponse(http.Response response, Function(dynamic) mapper) {
     if (response.statusCode == 200 || response.statusCode == 201) {
       final decoded = jsonDecode(response.body);

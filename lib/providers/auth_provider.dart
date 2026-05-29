@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/auth_user_model.dart';
 import '../services/auth_service.dart';
+import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final ApiService _apiService = ApiService();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   AuthUser? _user;
@@ -41,6 +44,17 @@ class AuthProvider extends ChangeNotifier {
         await _storage.write(key: 'user_data', value: jsonEncode(_user!.toJson()));
       }
 
+      // Register device token for notifications
+      final fcmToken = FcmService.deviceToken;
+      if (fcmToken != null) {
+        try {
+          await _apiService.registerDeviceToken(fcmToken, _token);
+        } catch (e) {
+          // ignore: avoid_print
+          print('Error registering FCM token: $e');
+        }
+      }
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -52,6 +66,17 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    final fcmToken = FcmService.deviceToken;
+    final currentToken = _token;
+    if (fcmToken != null && currentToken != null) {
+      try {
+        await _apiService.unregisterDeviceToken(fcmToken, currentToken);
+      } catch (e) {
+        // ignore: avoid_print
+        print('Error unregistering FCM token: $e');
+      }
+    }
+
     _user = null;
     _token = null;
     await _storage.delete(key: 'jwt_token');
@@ -63,9 +88,22 @@ class AuthProvider extends ChangeNotifier {
     _isInitializing = true;
     notifyListeners();
 
-    // Pequeña pausa artificial para que el splash se vea "bien lindo" y no sea solo un flash
-    await Future.delayed(const Duration(seconds: 2));
+    // Timeout de 3 segundos para no quedarse esperando
+    try {
+      await Future.wait([
+        _checkSessionInternal(),
+        Future.delayed(const Duration(milliseconds: 500)), // Splash mínimo
+      ]);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error en checkSession: $e');
+    }
 
+    _isInitializing = false;
+    notifyListeners();
+  }
+
+  Future<void> _checkSessionInternal() async {
     final savedToken = await _storage.read(key: 'jwt_token');
     final savedUserData = await _storage.read(key: 'user_data');
 
@@ -73,13 +111,19 @@ class AuthProvider extends ChangeNotifier {
       try {
         _token = savedToken;
         _user = AuthUser.fromJson(jsonDecode(savedUserData));
+
+        // Register device token on session restore if present
+        final fcmToken = FcmService.deviceToken;
+        if (fcmToken != null) {
+          _apiService.registerDeviceToken(fcmToken, _token).catchError((e) {
+            // ignore: avoid_print
+            print('Error registering FCM token on session restore: $e');
+          });
+        }
       } catch (e) {
         await logout();
       }
     }
-
-    _isInitializing = false;
-    notifyListeners();
   }
 
   Future<String?> getToken() async {
@@ -87,3 +131,4 @@ class AuthProvider extends ChangeNotifier {
     return await _storage.read(key: 'jwt_token');
   }
 }
+

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/solicitud_model.dart';
 import '../services/api_service.dart';
@@ -12,6 +13,11 @@ class SolicitudProvider extends ChangeNotifier {
   List<Solicitud> _solicitudes = [];
   String _selectedEstado = 'PENDIENTE';
   Solicitud? _solicitudDetalle;
+  
+  // Polling automático
+  Timer? _autoRefreshTimer;
+  bool _isAutoRefreshEnabled = false;
+  Duration _autoRefreshInterval = const Duration(seconds: 30);
 
   // Getters
   bool get isLoading => _isLoading;
@@ -19,6 +25,7 @@ class SolicitudProvider extends ChangeNotifier {
   List<Solicitud> get solicitudes => _solicitudes;
   Solicitud? get solicitudDetalle => _solicitudDetalle;
   String get selectedEstado => _selectedEstado;
+  bool get isAutoRefreshEnabled => _isAutoRefreshEnabled;
 
   List<Solicitud> get solicitudesFiltradas {
     return _solicitudes.where((s) => s.estado.toUpperCase() == _selectedEstado.toUpperCase()).toList();
@@ -31,6 +38,29 @@ class SolicitudProvider extends ChangeNotifier {
   void setEstadoFiltro(String estado) {
     _selectedEstado = estado;
     notifyListeners();
+  }
+
+  /// Activa el refresco automático cada X segundos
+  void startAutoRefresh(String? token, {VoidCallback? onUnauthorized}) {
+    if (_isAutoRefreshEnabled) return;
+    
+    _isAutoRefreshEnabled = true;
+    // ignore: avoid_print
+    print('✅ Auto-refresh activado (cada ${_autoRefreshInterval.inSeconds}s)');
+    
+    _autoRefreshTimer = Timer.periodic(_autoRefreshInterval, (_) async {
+      // ignore: avoid_print
+      print('🔄 Auto-refresh: sincronizando solicitudes...');
+      await fetchSolicitudes(token, onUnauthorized: onUnauthorized);
+    });
+  }
+
+  /// Detiene el refresco automático
+  void stopAutoRefresh() {
+    _autoRefreshTimer?.cancel();
+    _isAutoRefreshEnabled = false;
+    // ignore: avoid_print
+    print('❌ Auto-refresh desactivado');
   }
 
   Future<void> fetchSolicitudes(String? token, {VoidCallback? onUnauthorized}) async {
@@ -75,5 +105,11 @@ class SolicitudProvider extends ChangeNotifier {
 
   Future<void> refreshSolicitudes(String? token, {VoidCallback? onUnauthorized}) async {
     await fetchSolicitudes(token, onUnauthorized: onUnauthorized);
+  }
+
+  @override
+  void dispose() {
+    stopAutoRefresh();
+    super.dispose();
   }
 }
